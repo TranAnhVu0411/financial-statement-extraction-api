@@ -1,0 +1,9 @@
+mpi4py
+scipy
+matplotlib
+numpy
+six
+scikit-image
+Pillow 
+kaggle
+ipyparallel
