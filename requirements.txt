@@ -1,0 +1,22 @@
+flask
+flask-restful
+flask_cors
+pdf2image
+torch
+torchvision
+opencv-python
+scikit-image
+scipy
+gitpython
+matplotlib
+numpy
+Pillow
+psutil  # system resources
+PyYAML
+requests
+thop  # FLOPs computation
+tqdm
+ultralytics
+faiss-cpu
+six
+tensorflow
