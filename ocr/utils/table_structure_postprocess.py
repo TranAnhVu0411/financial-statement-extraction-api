@@ -412,7 +412,7 @@ def remove_supercell_overlap(supercell1, supercell2):
                 supercell2['row_numbers'] = []
                 common_rows = set()
 
-def nms_supercells(supercells):
+def nms_supercells(supercells, rows, columns):
     """
     A NMS scheme for supercells that first attempts to shrink supercells to
     resolve overlap.
@@ -432,6 +432,15 @@ def nms_supercells(supercells):
         if ((len(supercell2['row_numbers']) < 2 and len(supercell2['column_numbers']) < 2)
                 or len(supercell2['row_numbers']) == 0 or len(supercell2['column_numbers']) == 0):
             suppression[supercell2_num] = True
+        else:
+            column_rect = Rect()
+            for column_num in supercell2['column_numbers']:
+                column_rect.include_rect(list(columns[column_num]['bbox']))
+            row_rect = Rect()
+            for row_num in supercell2['row_numbers']:
+                row_rect.include_rect(list(rows[row_num]['bbox']))
+            supercell_rect = column_rect.intersect(row_rect)
+            supercell2['bbox'] = list(supercell_rect)
 
     return [obj for idx, obj in enumerate(supercells) if not suppression[idx]]
 
@@ -487,7 +496,7 @@ def refine_table_structures(table_bbox, table_structures, page_spans, class_thre
     # with rows and columns first; if supercells still overlap after this operation,
     # the threshold for NMS can basically be lowered to just above 0
     supercells = align_supercells(supercells, rows, columns)
-    supercells = nms_supercells(supercells)
+    supercells = nms_supercells(supercells, rows, columns)
 
     header_supercell_tree(supercells)
 
@@ -498,15 +507,13 @@ def refine_table_structures(table_bbox, table_structures, page_spans, class_thre
 
     return table_structures
 
-def objects_to_table_structures(table_object, objects_in_table, tokens_in_table, class_names, class_thresholds):
+def objects_to_table_structures(objects_in_table, tokens_in_table, class_names, class_thresholds):
     """
     Process the bounding boxes produced by the table structure recognition model into
     a *consistent* set of table structures (rows, columns, supercells, headers).
     This entails resolving conflicts/overlaps, and ensuring the boxes meet certain alignment
     conditions (for example: rows should all have the same width, etc.).
     """
-
-    page_num = table_object['page_num']
 
     table_structures = {}
 
@@ -526,12 +533,6 @@ def objects_to_table_structures(table_object, objects_in_table, tokens_in_table,
             if iob(obj['bbox'], header_obj['bbox']) >= 0.5:
                 obj['header'] = True
 
-    for row in rows:
-        row['page'] = page_num
-
-    for column in columns:
-        column['page'] = page_num
-
     #Refine table structures
     rows = refine_rows(rows, tokens_in_table, class_thresholds['table row'])
     columns = refine_columns(columns, tokens_in_table, class_thresholds['table column'])
@@ -544,12 +545,11 @@ def objects_to_table_structures(table_object, objects_in_table, tokens_in_table,
     column_rect = Rect() 
     for obj in columns:
         column_rect.include_rect(obj['bbox'])
-    table_object['row_column_bbox'] = [column_rect[0], row_rect[1], column_rect[2], row_rect[3]]
-    table_object['bbox'] = table_object['row_column_bbox']
+    table_box = [column_rect[0], row_rect[1], column_rect[2], row_rect[3]]
 
     # Process the rows and columns into a complete segmented table
-    columns = align_columns(columns, table_object['row_column_bbox'])
-    rows = align_rows(rows, table_object['row_column_bbox'])
+    columns = align_columns(columns, table_box)
+    rows = align_rows(rows, table_box)
 
     table_structures['rows'] = rows
     table_structures['columns'] = columns
@@ -557,11 +557,11 @@ def objects_to_table_structures(table_object, objects_in_table, tokens_in_table,
     table_structures['supercells'] = supercells
 
     if len(rows) > 0 and len(columns) > 1:
-        table_structures = refine_table_structures(table_object['bbox'], table_structures, tokens_in_table, class_thresholds)
+        table_structures = refine_table_structures(table_box, table_structures, tokens_in_table, class_thresholds)
 
     return table_structures
 
-def table_structure_to_cells(table_structures, table_spans, table_bbox):
+def table_structure_to_cells(table_structures, table_spans):
     """
     Assuming the row, column, supercell, and header bounding boxes have
     been refined into a set of consistent table structures, process these
@@ -711,10 +711,11 @@ def table_structure_to_cells(table_structures, table_spans, table_bbox):
         if cell_rect.get_area() > 0:  # getArea()
             cell['bbox'] = list(cell_rect)
             pass
+    table_rows_cols = {'rows': rows, 'cols': columns}
 
-    return cells, confidence_score
+    return table_rows_cols, cells, confidence_score
 
-def objects_to_cells(table, objects_in_table, tokens_in_table, class_map, class_thresholds):
+def objects_to_cells(objects_in_table, tokens_in_table, class_map, class_thresholds):
     """
     Process the bounding boxes produced by the table structure recognition model
     and the token/word/span bounding boxes into table cells.
@@ -723,14 +724,15 @@ def objects_to_cells(table, objects_in_table, tokens_in_table, class_map, class_
     uniquely slotted into the cells detected by the table model.
     """
 
-    table_structures = objects_to_table_structures(table, objects_in_table, tokens_in_table, class_map,
+    table_structures = objects_to_table_structures(objects_in_table, tokens_in_table, class_map,
                                                    class_thresholds)
 
     # Check for a valid table
     if len(table_structures['columns']) < 1 or len(table_structures['rows']) < 1:
         cells = []#None
         confidence_score = 0
+        table_rows_cols = {'rows': [], 'cols': []}
     else:
-        cells, confidence_score = table_structure_to_cells(table_structures, tokens_in_table, table['bbox'])
+        table_rows_cols, cells, confidence_score = table_structure_to_cells(table_structures, tokens_in_table)
 
-    return table_structures, cells, confidence_score
+    return table_structures, cells, confidence_score, table_rows_cols

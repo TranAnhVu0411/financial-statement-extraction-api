@@ -3,6 +3,7 @@ from flask_restful import Resource
 from ocr.preprocess import convert_pdf2images_and_preprocess, table_text_seperator
 import cv2
 import numpy as np
+import uuid
 from ocr.ocr_text import ocr_text
 from ocr.ocr_table import ocr_table
 from ocr.model import *
@@ -34,11 +35,14 @@ class OCRApi(Resource):
         results = table_text_seperator(img, table_detection)
         text_metadata = ocr_text(results['text'], detector, net)
         tables_metadata = []
+        tables_base64 = []
         if len(results['tables']) != 0:
             for table in results['tables']:
-                table_str = ocr_table(table['image'], tsr_model, net, detector)
-                tables_metadata.append({'table_coordinate': table['table_coordinate'], 'table_structure': table_str})
-        return make_response({'text_metadata': text_metadata, 'table_metadata': tables_metadata}, 200)
+                id = uuid.uuid1()
+                table_base64 = ocr_table(table['image'], tsr_model, net, detector, id)
+                tables_metadata.append({'table_coordinate': table['table_coordinate'], 'table_id': id})
+                tables_base64.append({'name': id, 'base64': table_base64})
+        return make_response({'metadata': {'text_metadata': text_metadata, 'table_metadata': tables_metadata}, 'file': tables_base64}, 200)
         
         
     
