@@ -14,6 +14,9 @@ Cung cấp 2 API (cổng 3502):
 ## II, Hướng dẫn cài đặt
 - Cài pytesseract và poppler
 - Clone git repository
+- Vào https://drive.google.com/drive/folders/15u27iYPSYJDOIJq_vMoMxs6_7yVpybFM?usp=sharing tải pretrained models, trong drive có 2 folders, hướng dẫn tải:
+    - models: tải folder về và chuyển folder vào thư mục financial-statement-extraction-api
+    - signver: trong signver có folder models, tải folder models và chuyển folder vào thư mục financial-statement-extraction-api/signver
 - Vào terminal, điều hướng vào thư mục bằng cd financial-statement-extraction-api
 - Tạo Virtual Environment và kích hoạt môi trường: python3 -m venv venv => source venv/bin/activate (Python 3.9.16)
 - Chạy pip install -r requirements.txt để tải các thư viện về
