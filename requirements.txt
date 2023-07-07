@@ -20,3 +20,7 @@ ultralytics
 faiss-cpu
 six
 tensorflow
+vietocr
+pytesseract
+Wand
+PyMuPDF

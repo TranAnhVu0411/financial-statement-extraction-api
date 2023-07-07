@@ -9,13 +9,38 @@ from PIL import Image, ImageEnhance
 
 from signver.signver.utils.data_utils import resnet_preprocess
 from tqdm import tqdm
+import pytesseract
+import ast
+from skimage.exposure import is_low_contrast
 
 # Use cv2 image format
 # Deskew image
+def tryeval(val):
+    try:
+        val = ast.literal_eval(val)
+    except ValueError:
+        pass
+    return val
+
 def deskew(img_array, write_on_terminal=True):
-    img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
     if write_on_terminal:
         print('DESKEW')
+    # Rotate 90, 180, 270
+    d = pytesseract.image_to_osd(img_array, config='--psm 0')
+    ocr_metadata_result = dict((a.strip(), tryeval(b.strip()))  
+                                for a, b in (element.split(': ')  
+                                            for element in d.strip().split('\n')))
+    rotate_mode = -1
+    if ocr_metadata_result['Rotate'] == 90:
+        rotate_mode = 0
+    elif ocr_metadata_result['Rotate'] == 180:
+        rotate_mode = 1
+    elif ocr_metadata_result['Rotate'] == 270:
+        rotate_mode = 2
+    if rotate_mode != -1:
+        img_array = cv2.rotate(img_array, rotate_mode)
+    # Deskew image
+    img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
     with wand_image(blob=img_str) as img:
         img.deskew(0.4*img.quantum_range)
         deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
@@ -25,11 +50,15 @@ def deskew(img_array, write_on_terminal=True):
 def contrast_adjustment(img_array, write_on_terminal=True):
     if write_on_terminal:
         print('INCREASE CONTRAST')
-    img = Image.fromarray(img_array)
-    enhancer = ImageEnhance.Contrast(img)
-    factor = 1.5
-    contrast = np.array(enhancer.enhance(factor))
-    return contrast
+    out = is_low_contrast(img_array, fraction_threshold=0.3)
+    if out:
+        img = Image.fromarray(img_array)
+        enhancer = ImageEnhance.Contrast(img)
+        factor = 1.5
+        contrast = np.array(enhancer.enhance(factor))
+        return contrast
+    else:
+        return img_array
 
 # Remove stamp
 def remove_stamp(img_array, write_on_terminal=True):

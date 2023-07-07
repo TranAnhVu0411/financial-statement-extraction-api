@@ -14,10 +14,15 @@ def text_region_detection(img_array, blur_kernel = (7,7), dilate_kernel = (5,4))
     # Find contours and draw rectangle
     cnts = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-    metadata = []
+    text_region = []
     for c in enumerate(cnts):
         x,y,w,h = cv2.boundingRect(c[1])
-        metadata.append({'text-region': (x, y, w, h)})
+        text_region.append((x,y,w,h))
+    # Sort text from top to bottom
+    text_region_sort = sorted(text_region, key=lambda k: k[1] + k[3])
+    metadata = []
+    for c in text_region_sort:
+        metadata.append({'text-region': c})
     return metadata
 
 # Preprocess text line before OCR (remove white space in left and right around line)

@@ -1,4 +1,4 @@
-SIGNATURE_CLEANER_PATH = "/Users/trananhvu/Documents/GitHub/financial-statement-extraction-api/signver/models/cleaner/small"
+SIGNATURE_CLEANER_PATH = '/Users/trananhvu/Documents/GitHub/financial-statement-extraction-api/signver/models/cleaner/small'
 
 YOLOV5_PATH = '/Users/trananhvu/Documents/GitHub/financial-statement-extraction-api/yolov5'
 SIGNATURE_LOGO_DETECTION_PATH = '/Users/trananhvu/Documents/GitHub/financial-statement-extraction-api/models/signature_logo_detection.pt'
