@@ -212,10 +212,10 @@ def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner):
         preprocess_image_array = cv2.cvtColor(preprocess_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
         org_image_array = cv2.cvtColor(org_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
         
-        preprocess_image = Image.fromarray(preprocess_image_array.astype('uint8')).convert('RGB')
-        org_image = Image.fromarray(org_image_array.astype('uint8')).convert('RGB')
+        preprocess_image_pil = Image.fromarray(preprocess_image_array.astype('uint8')).convert('RGB')
+        org_image_pil = Image.fromarray(org_image_array.astype('uint8')).convert('RGB')
         
-        base64_images.append({'original': convert_image_to_base64(org_image), 'preprocess': convert_image_to_base64(preprocess_image)})
+        base64_images.append({'original': convert_image_to_base64(org_image_pil), 'preprocess': convert_image_to_base64(preprocess_image_pil)})
 
     return base64_images
 
