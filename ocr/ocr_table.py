@@ -2,9 +2,11 @@ import numpy as np
 import math
 from tqdm import tqdm
 
-# from openpyxl import Workbook, load_workbook
-# from openpyxl.styles import Alignment, Font
-# from openpyxl.utils import get_column_letter
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
+from openpyxl.utils import get_column_letter
+import base64
+from io import BytesIO
 
 from ocr.utils.text_utils import ocr, get_text_bounding_box
 from ocr.utils.text_region_detection import *
@@ -58,7 +60,7 @@ def convert_structure(img, tsr_result, tokens_in_table):
 
 def ocr_cell(img, min_line_height, detector):
     result = ''
-    # text_cell_metadata = []
+    text_cell_metadata = []
     text_metadata = text_region_detection(img, dilate_kernel=(7,7))
     for metadata in text_metadata:
         x_text = metadata['text-region'][0]
@@ -67,7 +69,7 @@ def ocr_cell(img, min_line_height, detector):
         h_text = metadata['text-region'][3]
         text_region = img[y_text:y_text+h_text, x_text:x_text+w_text]
         lines = text_line_detection(text_region, min_line_height)
-        # lines_metadata = []
+        lines_metadata = []
         for line in lines:
             x_line = line[0]
             y_line = line[1]
@@ -77,18 +79,19 @@ def ocr_cell(img, min_line_height, detector):
             new_x_line, new_w_line = preprocess_line_region(line_region)
             new_line_region = text_region[y_line:y_line+h_line, new_x_line:new_x_line+new_w_line]
             text = ocr(new_line_region, detector)
-            # lines_metadata.append({'line_coordinates': [int(new_x_line), int(y_line), int(new_w_line), int(h_line)], 'text': text})
+            lines_metadata.append({'line_coordinates': [int(new_x_line), int(y_line), int(new_w_line), int(h_line)], 'text': text})
             result+=text+' '
-        # text_cell_metadata.append({'region_coordinates': [int(x_text), int(y_text), int(w_text), int(h_text)], 'lines': lines_metadata, 'text': result})
+        text_cell_metadata.append({'region_coordinates': [int(x_text), int(y_text), int(w_text), int(h_text)], 'lines': lines_metadata, 'text': result})
 
     # return text_cell_metadata
-    return result
+    return result, text_cell_metadata
 
 def ocr_table_cells(img, cells, table_rows_cols, ocr_model):
     print('TABLE OCR')
     min_text_height = 999
     for cell in tqdm(cells):
         text = ''
+        metadata = []
         if len(cell['spans'])!=0:
             min_text_height = min([bb[3]-bb[1] for bb in cell['spans']]+[min_text_height])
             # Calculate min line height by using text height
@@ -100,8 +103,9 @@ def ocr_table_cells(img, cells, table_rows_cols, ocr_model):
             y2 = int(bbox[3])
             crop = img[y1:y2, x1:x2]
             if not (crop.shape[0]==0 or crop.shape[1]==0):
-                text = ocr_cell(crop, min_line_height, ocr_model)
+                text, metadata = ocr_cell(crop, min_line_height, ocr_model)
         cell['text'] = text
+        cell['metadata'] = metadata
 
     row_height_data = []
     column_width_data = []
@@ -114,56 +118,56 @@ def ocr_table_cells(img, cells, table_rows_cols, ocr_model):
         column_width_data.append(math.ceil((col['bbox'][2]-col['bbox'][0]) * ratio))
     return cells, row_height_data, column_width_data
 
-# def create_excel_base64(cells, row_heights, column_widths):
-#     # Tạo workbook mới
-#     workbook = Workbook()
-#     sheet = workbook.active
-#     font = Font(name='Calibri', size = 14, charset=204)
-#     # Thiết lập chiều cao hàng và chiều dài cột (Từ pixel chuyển về đơn vị tính của Excel)
-#     for row, height in enumerate(row_heights, start=1):
-#         sheet.row_dimensions[row].height = height*3/4
+def create_excel_base64(cells, row_heights, column_widths):
+    # Tạo workbook mới
+    workbook = Workbook()
+    sheet = workbook.active
+    font = Font(name='Calibri', size = 14, charset=204)
+    # Thiết lập chiều cao hàng và chiều dài cột (Từ pixel chuyển về đơn vị tính của Excel)
+    for row, height in enumerate(row_heights, start=1):
+        sheet.row_dimensions[row].height = height*3/4
 
-#     for col, width in enumerate(column_widths, start=1):
-#         sheet.column_dimensions[get_column_letter(col)].width = width*1/7
+    for col, width in enumerate(column_widths, start=1):
+        sheet.column_dimensions[get_column_letter(col)].width = width*1/7
 
-#     # Đổ dữ liệu vào từng cell
-#     for cell_data in cells:
-#         row_nums = cell_data['row_nums']
-#         col_nums = cell_data['column_nums']
-#         text = cell_data['text'].strip()
+    # Đổ dữ liệu vào từng cell
+    for cell_data in cells:
+        row_nums = cell_data['row_nums']
+        col_nums = cell_data['column_nums']
+        text = cell_data['text'].strip()
 
-#         # Merge cell nếu cần thiết
-#         if len(row_nums) > 1 or len(col_nums) > 1:
-#             start_row = row_nums[0] + 1
-#             end_row = row_nums[-1] + 1
-#             start_col = col_nums[0] + 1
-#             end_col = col_nums[-1] + 1
-#             sheet.merge_cells(start_row=start_row, end_row=end_row, start_column=start_col, end_column=end_col)
+        # Merge cell nếu cần thiết
+        if len(row_nums) > 1 or len(col_nums) > 1:
+            start_row = row_nums[0] + 1
+            end_row = row_nums[-1] + 1
+            start_col = col_nums[0] + 1
+            end_col = col_nums[-1] + 1
+            sheet.merge_cells(start_row=start_row, end_row=end_row, start_column=start_col, end_column=end_col)
 
-#             # Đặt giá trị và căn chỉnh cho cell merge
-#             merge_cell = sheet.cell(row=start_row, column=start_col)
-#             merge_cell.value = text
-#             merge_cell.alignment = Alignment(wrapText=True)
-#             merge_cell.font = font
-#         else:
-#             # Đặt giá trị và căn chỉnh cho cell không merge
-#             row = row_nums[0] + 1
-#             col = col_nums[0] + 1
-#             cell = sheet.cell(row=row, column=col)
-#             cell.value = text
-#             cell.alignment = Alignment(wrapText=True)
-#             cell.font = font
+            # Đặt giá trị và căn chỉnh cho cell merge
+            merge_cell = sheet.cell(row=start_row, column=start_col)
+            merge_cell.value = text
+            merge_cell.alignment = Alignment(wrapText=True)
+            merge_cell.font = font
+        else:
+            # Đặt giá trị và căn chỉnh cho cell không merge
+            row = row_nums[0] + 1
+            col = col_nums[0] + 1
+            cell = sheet.cell(row=row, column=col)
+            cell.value = text
+            cell.alignment = Alignment(wrapText=True)
+            cell.font = font
 
-#     # Tạo BytesIO để lưu workbook vào bộ nhớ
-#     excel_data = BytesIO()
-#     workbook.save(excel_data)
-#     excel_data.seek(0)
+    # Tạo BytesIO để lưu workbook vào bộ nhớ
+    excel_data = BytesIO()
+    workbook.save(excel_data)
+    excel_data.seek(0)
 
-#     # Chuyển đổi dữ liệu Excel thành base64
-#     # base64_data = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+base64.b64encode(excel_data.read()).decode('utf-8')
-#     base64_data = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+base64.b64encode(excel_data.read()).decode()
+    # Chuyển đổi dữ liệu Excel thành base64
+    # base64_data = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+base64.b64encode(excel_data.read()).decode('utf-8')
+    base64_data = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+base64.b64encode(excel_data.read()).decode()
 
-#     return base64_data
+    return base64_data
 
 def convert_cells_to_luckysheet(cells, row_heights, column_widths, luckysheet_font_size = 11):
     cell_data = []
@@ -262,18 +266,24 @@ def convert_cells_to_luckysheet(cells, row_heights, column_widths, luckysheet_fo
 
     return luckysheet
 
-def ocr_table(img, tsr_model, net, detector, id):
+def ocr_table_metadata(img, tsr_model, net, detector):
     print('LOAD MODELS')
-
-    img = deskew(img)
+    _, img = deskew(img)
     tokens_in_table = get_table_text_object(img, net)
     tsr_result = table_structure_recognition(img, tsr_model)
     cells, table_rows_cols= convert_structure(img, tsr_result, tokens_in_table)
     img = remove_line(img)
     text_cells, row_heights, column_widths = ocr_table_cells(img, cells, table_rows_cols, detector)
-    metadata = convert_cells_to_luckysheet(text_cells, row_heights, column_widths)
-    # base64_data = create_excel_base64(text_cells, row_heights, column_widths, id)
+    return text_cells, row_heights, column_widths
 
+def ocr_table_app(img, tsr_model, net, detector):
+    text_cells, row_heights, column_widths = ocr_table_metadata(img, tsr_model, net, detector)
+    metadata = convert_cells_to_luckysheet(text_cells, row_heights, column_widths)
     return metadata
+
+def ocr_table_file(img, tsr_model, net, detector):
+    text_cells, row_heights, column_widths = ocr_table_metadata(img, tsr_model, net, detector)
+    base64_data = create_excel_base64(text_cells, row_heights, column_widths)
+    return base64_data
 
 

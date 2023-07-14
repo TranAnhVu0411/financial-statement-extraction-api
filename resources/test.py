@@ -4,7 +4,7 @@ from ocr.preprocess import convert_pdf2images_and_preprocess, table_text_seperat
 import cv2
 import numpy as np
 from ocr.ocr_text import ocr_text
-from ocr.ocr_table import ocr_table
+from ocr.ocr_table import ocr_table_app, ocr_table_file, ocr_table_metadata
 from ocr.model import *
 
 class PreprocessApi(Resource):
@@ -22,6 +22,8 @@ class PreprocessApi(Resource):
         
 class OCRApi(Resource):
     def post(self):
+        if 'type' not in request.form:
+            return make_response("No type part", 400)
         if 'file' not in request.files:
             return make_response("No file part", 400)
         file = request.files['file']
@@ -36,8 +38,19 @@ class OCRApi(Resource):
         tables_metadata = []
         if len(results['tables']) != 0:
             for table in results['tables']:
-                table_structure = ocr_table(table['image'], tsr_model, net, detector, id)
-                tables_metadata.append({'table_coordinate': table['table_coordinate'], 'table_structure': table_structure})
+                # trả về luckysheet table structure (Cho frontend)
+                if request.form['type'] == 'app':
+                    table_structure = ocr_table_app(table['image'], tsr_model, net, detector)
+                    tables_metadata.append({'table_coordinate': table['table_coordinate'], 'table_structure': table_structure})
+                # trả về table structure với thông tin text cell chứa metadata của text_region và line_region
+                if request.form['type'] == 'test':
+                    table_metadata = ocr_table_metadata(table['image'], tsr_model, net, detector)
+                    tables_metadata.append({'table_coordinate': table['table_coordinate'], 'table_metadata': table_metadata})
+                # trả về base64 excel
+                if request.form['type'] == 'file':
+                    table_base64 = ocr_table_file(table['image'], tsr_model, net, detector)
+                    tables_metadata.append({'table_coordinate': table['table_coordinate'], 'excel_file': table_base64})
+
         return make_response({'metadata': {'text_metadata': text_metadata, 'table_metadata': tables_metadata}}, 200)
 
         

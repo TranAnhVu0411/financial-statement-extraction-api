@@ -6,9 +6,9 @@ Cung cấp 2 API (cổng 3502):
     - Đầu vào: file PDF
     - Đầu ra: Danh sách thông tin ảnh trang trích xuất của PDF, thông tin ảnh bao gồm ảnh gốc (original) và ảnh tiền xử lý (preprocess) được để dưới dạng base64
 - /api/ocr:
-    - Đầu vào: 1 ảnh trang đã tiền xử lý
+    - Đầu vào: 1 ảnh trang đã tiền xử lý và loại table metadata sẽ xuất ra (type):
     - Đầu ra: Metadata OCR của ảnh trang đó, bao gồm:
-        - Thông tin của các bảng gồm vị trí của bảng và metadata cấu trúc bảng
+        - Thông tin của các bảng gồm vị trí của bảng và metadata của bảng (tuỳ thuộc vào type, tham khảo trong example/README.md)
         - Thông tin của các đoạn văn gồm danh sách thông tin các dòng trong đoạn văn, thông tin các dòng trong đoạn văn bao gồm vị trí của dòng và text tương ứng với dòng đó
 
 ## II, Hướng dẫn cài đặt
