@@ -81,8 +81,11 @@ def find_min_height(metadata, bboxes):
     return new_metadata
 
 def ocr_text(img, detector, net):
-    img, bboxes = remove_background(img, net)
-    text_metadata = text_region_detection(img, dilate_kernel=(5,4))
+    # OCR theo ảnh gốc
+    org_img = img.copy()
+    # Loại bỏ background để lấy thông tin bounding box đoạn văn chính xác
+    preprocess_img, bboxes = remove_background(img, net)
+    text_metadata = text_region_detection(preprocess_img, dilate_kernel=(5,4))
 
     text_metadata = find_min_height(text_metadata, bboxes)
     
@@ -93,17 +96,22 @@ def ocr_text(img, detector, net):
         y_text = metadata['text-region'][1]
         w_text = metadata['text-region'][2]
         h_text = metadata['text-region'][3]
-        text_region = img[y_text:y_text+h_text, x_text:x_text+w_text]
-        lines = text_line_detection(text_region, metadata['min_line_height'])
+        # Lấy ảnh đoạn văn (với ảnh gốc và ảnh tiền xử lý)
+        org_text_region = org_img[y_text:y_text+h_text, x_text:x_text+w_text]
+        preprocess_text_region = preprocess_img[y_text:y_text+h_text, x_text:x_text+w_text]
+        lines = text_line_detection(preprocess_text_region, metadata['min_line_height'])
         lines_metadata = []
         for line in lines:
             x_line = line[0]
             y_line = line[1]
             w_line = line[2]
             h_line = line[3]
-            line_region = text_region[y_line:y_line+h_line, x_line:x_line+w_line]
+            # Lấy dòng chưa cắt vùng thừa trái phải (với ảnh đã preprocess loại bỏ background)
+            line_region = preprocess_text_region[y_line:y_line+h_line, x_line:x_line+w_line]
+            # Lấy vị trí trái phải mới
             new_x_line, new_w_line = preprocess_line_region(line_region)
-            new_line_region = text_region[y_line:y_line+h_line, new_x_line:new_x_line+new_w_line]
+            # Lấy dòng đã cắt vùng thừa trái phải (với ảnh gốc)
+            new_line_region = org_text_region[y_line:y_line+h_line, new_x_line:new_x_line+new_w_line]
             text = ocr(new_line_region, detector)
             lines_metadata.append({'line_coordinates': [int(new_x_line)+x_text, int(y_line)+y_text, int(new_w_line), int(h_line)], 'text': text})
         new_text_metadata.append(lines_metadata)
