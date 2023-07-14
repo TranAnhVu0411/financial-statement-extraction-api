@@ -25,26 +25,35 @@ def tryeval(val):
 def deskew(img_array, write_on_terminal=True):
     if write_on_terminal:
         print('DESKEW')
-    # Rotate 90, 180, 270
-    d = pytesseract.image_to_osd(img_array, config='--psm 0')
-    ocr_metadata_result = dict((a.strip(), tryeval(b.strip()))  
-                                for a, b in (element.split(': ')  
-                                            for element in d.strip().split('\n')))
-    rotate_mode = -1
-    if ocr_metadata_result['Rotate'] == 90:
-        rotate_mode = 0
-    elif ocr_metadata_result['Rotate'] == 180:
-        rotate_mode = 1
-    elif ocr_metadata_result['Rotate'] == 270:
-        rotate_mode = 2
-    if rotate_mode != -1:
-        img_array = cv2.rotate(img_array, rotate_mode)
-    # Deskew image
-    img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
-    with wand_image(blob=img_str) as img:
-        img.deskew(0.4*img.quantum_range)
-        deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    return deskew
+    try:
+        # Rotate 90, 180, 270
+        d = pytesseract.image_to_osd(img_array, config='--psm 0')
+        ocr_metadata_result = dict((a.strip(), tryeval(b.strip()))  
+                                    for a, b in (element.split(': ')  
+                                                for element in d.strip().split('\n')))
+        rotate_mode = -1
+        if ocr_metadata_result['Rotate'] == 90:
+            rotate_mode = 0
+        elif ocr_metadata_result['Rotate'] == 180:
+            rotate_mode = 1
+        elif ocr_metadata_result['Rotate'] == 270:
+            rotate_mode = 2
+        if rotate_mode != -1:
+            img_array = cv2.rotate(img_array, rotate_mode)
+        img_array_rotate = img_array.copy()
+        # Deskew image
+        img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
+        with wand_image(blob=img_str) as img:
+            img.deskew(0.4*img.quantum_range)
+            deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        return img_array_rotate, deskew
+    except:
+        img_array_rotate = img_array.copy()
+        img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
+        with wand_image(blob=img_str) as img:
+            img.deskew(0.4*img.quantum_range)
+            deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        return img_array_rotate, deskew
 
 # Increase contrast
 def contrast_adjustment(img_array, write_on_terminal=True):
@@ -88,10 +97,12 @@ def signature_remove(img_array, detection, cleaner, write_on_terminal=True):
     if write_on_terminal:
         print('SIGNATURE DETECTION')
     remove_signature = img_array.copy()
-    results = detection([img_array], size=640)  # includes NMS
+    yolo_results = detection([img_array], size=640)  # includes NMS
+    # Pretrained nhận diện chữ ký và logo, nhưng ở đây ta chỉ cần loại bỏ chữ ký
+    results = [i for i in yolo_results.xyxy[0] if i[5]==1]
     signature_metadata = []
-    if len(results.xyxy[0])!=0:    
-        for sign_coord in results.xyxy[0]:
+    if len(results)!=0:    
+        for sign_coord in results:
             x0 = int(sign_coord[0])
             y0 = int(sign_coord[1])
             x1 = int(sign_coord[2])
@@ -170,11 +181,12 @@ def remove_line(image, write_on_terminal=True):
     return result
 
 def preprocess_image(img, signature_logo_detection, cleaner):
-    img = deskew(img, write_on_terminal=False)
+    # Rotate lại ảnh original (Nếu original image đang bị xoay 90, 180 hoặc 270)
+    org_img, img = deskew(img, write_on_terminal=False)
     img = contrast_adjustment(img, write_on_terminal=False)
     img = remove_stamp(img, write_on_terminal=False)
     img = signature_remove(img, signature_logo_detection, cleaner, write_on_terminal=False)
-    return img
+    return org_img, img
 
 def convert_image_to_base64(pil_img):
     img_byte_arr = io.BytesIO()
@@ -193,13 +205,17 @@ def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner):
     print('PREPROCESS IMAGES')
     for image in tqdm(images):
         # Make copy and preprocess image
-        image_copy = image.copy()
-        image_copy = np.array(image_copy)
-        image_copy = cv2.cvtColor(image_copy, cv2.COLOR_RGB2BGR) # convert RGB to BGR since preprocess is used OpenCV image format
-        image_copy = preprocess_image(image_copy, signature_logo_detection, cleaner)
-        image_copy = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
-        image_copy = Image.fromarray(image_copy.astype('uint8')).convert('RGB')
-        base64_images.append({'original': convert_image_to_base64(image), 'preprocess': convert_image_to_base64(image_copy)})
+        image_array = np.array(image)
+        image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) # convert RGB to BGR since preprocess is used OpenCV image format
+        org_image_array, preprocess_image_array = preprocess_image(image_array, signature_logo_detection, cleaner)
+        
+        preprocess_image_array = cv2.cvtColor(preprocess_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
+        org_image_array = cv2.cvtColor(org_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
+        
+        preprocess_image = Image.fromarray(preprocess_image_array.astype('uint8')).convert('RGB')
+        org_image = Image.fromarray(org_image_array.astype('uint8')).convert('RGB')
+        
+        base64_images.append({'original': convert_image_to_base64(org_image), 'preprocess': convert_image_to_base64(preprocess_image)})
 
     return base64_images
 

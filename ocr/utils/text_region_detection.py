@@ -45,4 +45,11 @@ def preprocess_line_region(line, blur_kernel = (7,7), dilate_kernel = (7,7)):
         x,_,w,_ = cv2.boundingRect(c[1])
         min_x_list.append(x)
         max_x_list.append(x+w)
-    return min(min_x_list), max(max_x_list)
+    new_x_line = 0
+    new_w_line = line.shape[1]
+    if len(min_x_list) != 0:
+        new_x_line = min(min_x_list)
+    if len(max_x_list) != 0:
+        new_w_line = max(max_x_list)
+    
+    return new_x_line, new_w_line
