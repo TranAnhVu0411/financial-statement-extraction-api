@@ -12,7 +12,7 @@ Cung cấp 2 API (cổng 3502):
         - Thông tin của các đoạn văn gồm danh sách thông tin các dòng trong đoạn văn, thông tin các dòng trong đoạn văn bao gồm vị trí của dòng và text tương ứng với dòng đó
 
 ## II, Hướng dẫn cài đặt
-- Cài pytesseract và poppler
+- Cài tesseract và poppler
 - Clone git repository
 - Vào https://drive.google.com/drive/folders/15u27iYPSYJDOIJq_vMoMxs6_7yVpybFM?usp=sharing tải pretrained models, trong drive có 2 folders, hướng dẫn tải:
     - models: tải folder về và chuyển folder vào thư mục financial-statement-extraction-api
