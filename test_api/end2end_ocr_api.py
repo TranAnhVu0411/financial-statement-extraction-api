@@ -20,12 +20,12 @@ def b64_to_excel(base64_string, path):
     decoded_data = base64.b64decode(str(encoded_data))
 
     # Create a BytesIO object to read the decoded data
-    excel_data = BytesIO(decoded_data)
+    excel_data = io.BytesIO(decoded_data)
 
     # Load the Excel file using openpyxl
     workbook = load_workbook(excel_data)
 
-    excel_workbook.save(path)
+    workbook.save(path)
 
 if __name__ == "__main__":
     print("RUNNING REQUEST")
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             json.dump(metadata['text_metadata'])
         # Write text
         txt_file = open(os.path.join(save_dir, str(i), 'text.txt'), "a")
-        txt_file_object.write(metadata['text'])
+        txt_file.write(metadata['text'])
         txt_file.close()
         # Write table
         if len(metadata['table_metadata'])!=0:
