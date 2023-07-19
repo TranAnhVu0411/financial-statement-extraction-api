@@ -21,8 +21,8 @@ def create_dir(dir):
 
 if __name__ == "__main__":
     print("RUNNING REQUEST")
-    url = "http://localhost:3502/api/preprocess"
-    pdf_path = "/Users/trananhvu/Downloads/test1.pdf"
+    url = "http://127.0.0.1:3502/api/preprocess"
+    pdf_path = "/home/crawl05/test1.pdf"
     payload={}
     files=[
         ('file',(os.path.basename(pdf_path),open(pdf_path,'rb'),'application/pdf'))

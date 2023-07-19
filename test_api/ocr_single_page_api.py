@@ -21,7 +21,7 @@ def ocr_single(image_path, url, export_type):
 if __name__ == "__main__":
     print("RUNNING REQUEST")
     url = "http://localhost:3502/api/ocr"
-    image_path = "/Users/trananhvu/Documents/GitHub/test/example/images/test1/preprocess/4.jpg"
+    image_path = "/home/crawl05/financial-statement-extraction-api/test_api/example/images/test1/preprocess/2.jpg"
     export_type = 'app'
     result = ocr_single(image_path, url, export_type)
 

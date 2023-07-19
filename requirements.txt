@@ -10,7 +10,7 @@ scipy
 gitpython
 matplotlib
 numpy
-Pillow
+Pillow==9.5.0
 psutil  # system resources
 PyYAML
 requests

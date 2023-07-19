@@ -1,4 +1,4 @@
-from pdf2image import convert_from_bytes
+from pdf2image import convert_from_bytes, pdfinfo_from_bytes
 import io
 from base64 import b64encode
 
@@ -12,6 +12,7 @@ from tqdm import tqdm
 import pytesseract
 import ast
 from skimage.exposure import is_low_contrast
+import fitz
 
 # Use cv2 image format
 # Deskew image
@@ -198,24 +199,56 @@ def convert_image_to_base64(pil_img):
     return img_b64_string
 
 # Convert pdf to list of images and preprocess
-def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner):
-    print('CONVERT_PDF2IMAGES')
-    images = convert_from_bytes(pdf)
+def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner, return_type):
+    # print('CONVERT_PDF2IMAGES')
+    # images = convert_from_bytes(pdf)
+    # base64_images = []
+    # print('PREPROCESS IMAGES')
+    # for image in tqdm(images):
+    #     # Make copy and preprocess image
+    #     image_array = np.array(image)
+    #     image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) # convert RGB to BGR since preprocess is used OpenCV image format
+    #     org_image_array, preprocess_image_array = preprocess_image(image_array, signature_logo_detection, cleaner)
+        
+    #     preprocess_image_array = cv2.cvtColor(preprocess_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
+    #     org_image_array = cv2.cvtColor(org_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
+        
+    #     preprocess_image_pil = Image.fromarray(preprocess_image_array.astype('uint8')).convert('RGB')
+    #     org_image_pil = Image.fromarray(org_image_array.astype('uint8')).convert('RGB')
+        
+    #     base64_images.append({'original': convert_image_to_base64(org_image_pil), 'preprocess': convert_image_to_base64(preprocess_image_pil)})
+
+    # return base64_images
+    
+    print('CONVERT_PDF2IMAGES AND PREPROCESS')
     base64_images = []
-    print('PREPROCESS IMAGES')
-    for image in tqdm(images):
+    doc = fitz.open("pdf", pdf)
+    zoom = 2
+    mat = fitz.Matrix(zoom, zoom)
+    count = 0
+    # Count variable is to get the number of pages in the pdf
+    for p in doc:
+        count += 1
+    for i in tqdm(range(count)):
+        page = doc.load_page(i)
+        pix = page.get_pixmap(matrix=mat)
+        data = pix.pil_tobytes(format="jpeg", optimize=True)
+        image = Image.open(io.BytesIO(data))
         # Make copy and preprocess image
         image_array = np.array(image)
         image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) # convert RGB to BGR since preprocess is used OpenCV image format
         org_image_array, preprocess_image_array = preprocess_image(image_array, signature_logo_detection, cleaner)
         
-        preprocess_image_array = cv2.cvtColor(preprocess_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
-        org_image_array = cv2.cvtColor(org_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
-        
-        preprocess_image_pil = Image.fromarray(preprocess_image_array.astype('uint8')).convert('RGB')
-        org_image_pil = Image.fromarray(org_image_array.astype('uint8')).convert('RGB')
-        
-        base64_images.append({'original': convert_image_to_base64(org_image_pil), 'preprocess': convert_image_to_base64(preprocess_image_pil)})
+        if return_type=='base64':
+            preprocess_image_array = cv2.cvtColor(preprocess_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
+            org_image_array = cv2.cvtColor(org_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
+            
+            preprocess_image_pil = Image.fromarray(preprocess_image_array.astype('uint8')).convert('RGB')
+            org_image_pil = Image.fromarray(org_image_array.astype('uint8')).convert('RGB')
+            
+            base64_images.append({'original': convert_image_to_base64(org_image_pil), 'preprocess': convert_image_to_base64(preprocess_image_pil)})
+        elif return_type=='image':
+            base64_images.append(preprocess_image_array)
 
     return base64_images
 

@@ -116,3 +116,13 @@ def ocr_text(img, detector, net):
             lines_metadata.append({'line_coordinates': [int(new_x_line)+x_text, int(y_line)+y_text, int(new_w_line), int(h_line)], 'text': text})
         new_text_metadata.append(lines_metadata)
     return new_text_metadata
+
+def metadata_to_text(metadata):
+    text=''
+    for paragraph in metadata:
+        paragraph_text = ''
+        for line in paragraph:
+            paragraph_text+=line['text']+'\n'
+        text += paragraph_text.strip() + '\n\n'
+    return text.strip()
+    
