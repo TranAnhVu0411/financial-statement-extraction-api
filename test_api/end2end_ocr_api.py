@@ -30,7 +30,7 @@ def b64_to_excel(base64_string, path):
 if __name__ == "__main__":
     print("RUNNING REQUEST")
     url = "http://127.0.0.1:3502/api/e2eocr"
-    pdf_path = "/home/crawl05/test1.pdf"
+    pdf_path = "/Users/trananhvu/Downloads/test1.pdf"
     payload={}
     files=[
         ('file',(os.path.basename(pdf_path),open(pdf_path,'rb'),'application/pdf'))
@@ -48,8 +48,8 @@ if __name__ == "__main__":
     for i, metadata in tqdm(enumerate(response.json())):
         create_dir(os.path.join(save_dir, str(i)))
         # Write text metadata
-        with open(os.path.join(save_dir, str(i), 'text_metadata.json'), 'w'):
-            json.dump(metadata['text_metadata'])
+        with open(os.path.join(save_dir, str(i), 'text_metadata.json'), 'w') as f:
+            json.dump(metadata['text_metadata'], f)
         # Write text
         txt_file = open(os.path.join(save_dir, str(i), 'text.txt'), "a")
         txt_file.write(metadata['text'])
