@@ -62,7 +62,7 @@ def deskew(img_array, write_on_terminal=True):
         #     img.deskew(0.4*img.quantum_range)
         #     deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
-        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.05)
+        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.1)
         deskew = rotate_straight(img_str, angle, (255, 255, 255))
 
         return img_array_rotate, deskew
@@ -73,7 +73,7 @@ def deskew(img_array, write_on_terminal=True):
         #     img.deskew(0.4*img.quantum_range)
         #     deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
-        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.05)
+        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.1)
         deskew = rotate_straight(img_str, angle, (255, 255, 255))
         return img_array_rotate, deskew
 
