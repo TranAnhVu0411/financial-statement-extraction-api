@@ -1,7 +1,7 @@
 flask
 flask-restful
 flask_cors
-pdf2image
+# pdf2image
 torch
 torchvision
 opencv-python
@@ -22,6 +22,7 @@ six
 tensorflow
 vietocr
 pytesseract
-Wand
+# Wand
 PyMuPDF
 openpyxl
+deskew

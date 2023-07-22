@@ -1,36 +1,20 @@
 import requests
 import os
 from pathlib import Path
-import base64
 from tqdm import tqdm
-from PIL import Image
-import io
+import argparse
 import time
-from openpyxl import load_workbook
 import json
+from utils import create_dir, b64_to_excel
 
-def create_dir(dir):
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-
-
-def b64_to_excel(base64_string, path):
-    _, encoded_data = base64_string.split(",", 1)
-    # Decode the base64 data
-    decoded_data = base64.b64decode(str(encoded_data))
-
-    # Create a BytesIO object to read the decoded data
-    excel_data = io.BytesIO(decoded_data)
-
-    # Load the Excel file using openpyxl
-    workbook = load_workbook(excel_data)
-
-    workbook.save(path)
+parser = argparse.ArgumentParser(description='End to End OCR')
+parser.add_argument('file_path', type=str, help='pdf file path', required=True)
+args = parser.parse_args()
 
 if __name__ == "__main__":
     print("RUNNING REQUEST")
     url = "http://127.0.0.1:3502/api/e2eocr"
-    pdf_path = "/Users/trananhvu/Downloads/test1.pdf"
+    pdf_path = args.file_path
     payload={}
     files=[
         ('file',(os.path.basename(pdf_path),open(pdf_path,'rb'),'application/pdf'))
@@ -42,7 +26,7 @@ if __name__ == "__main__":
     print("REQUEST RUNTIME: {}".format(request_time))
 
     print("CREATING RESULT DIR")
-    save_dir = 'result/{}'.format(Path(pdf_path).stem)
+    save_dir = os.path.join('example', 'result', Path(pdf_path).stem)
 
     print("SAVING RESULTS...")
     for i, metadata in tqdm(enumerate(response.json())):

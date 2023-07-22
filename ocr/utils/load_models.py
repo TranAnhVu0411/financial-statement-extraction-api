@@ -14,7 +14,7 @@ def VietOCR_model():
     detector = Predictor(config)
     return detector
 
-def YOLOv5_model(model_path, yolo_path = YOLOV5_PATH):
+def YOLOv5_model(model_path, yolo_path = YOLOV5_PATH, threshold = False):
     # Load YOLOV5 model
     model = torch.hub.load(
         yolo_path,
@@ -22,6 +22,8 @@ def YOLOv5_model(model_path, yolo_path = YOLOV5_PATH):
         source='local',
         path = model_path,
         force_reload = True)
+    if threshold:
+        model.conf = 0.7
     return model
 
 def CRAFT_model(model_path = CRAFT_PATH):

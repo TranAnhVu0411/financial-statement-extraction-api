@@ -1,13 +1,20 @@
 from ocr_single_page_api import ocr_single
-from preprocess_api import create_dir
+from utils import create_dir
 import os
 import json
+import argparse
+
+parser = argparse.ArgumentParser(description='OCR PDF')
+parser.add_argument('-file_path', '--file_path', type=str, help='preprocess image dir', required=True)
+parser.add_argument('-type', '--type', type=str, help='export type', choices=['app', 'test'], default='app')
+args = parser.parse_args()
 
 if __name__ == "__main__":
     url = "http://localhost:3502/api/ocr"
-    export_type = 'app'
-    preprocess_img_dir = 'example/images/test1/preprocess'
-    save_dir = 'example/metadata/test1'
+    export_type = args.type
+    preprocess_img_dir = args.file_path
+    pdf_name = os.path.normpath(preprocess_img_dir).split(os.path.sep)[-2] 
+    save_dir = os.path.join('example', 'metadata', pdf_name)
     create_dir(save_dir)
 
     for idx, img_name in enumerate(os.listdir(preprocess_img_dir)):

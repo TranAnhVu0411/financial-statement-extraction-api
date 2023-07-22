@@ -1,10 +1,10 @@
-from pdf2image import convert_from_bytes, pdfinfo_from_bytes
+# from pdf2image import convert_from_bytes, pdfinfo_from_bytes
 import io
 from base64 import b64encode
 
 import cv2
 import numpy as np
-from wand.image import Image as wand_image
+# from wand.image import Image as wand_image
 from PIL import Image, ImageEnhance
 
 from signver.signver.utils.data_utils import resnet_preprocess
@@ -13,6 +13,8 @@ import pytesseract
 import ast
 from skimage.exposure import is_low_contrast
 import fitz
+import math
+from deskew import determine_skew
 
 # Use cv2 image format
 # Deskew image
@@ -22,6 +24,18 @@ def tryeval(val):
     except ValueError:
         pass
     return val
+
+def rotate_straight(image, angle, background):
+    old_width, old_height = image.shape[:2]
+    angle_radian = math.radians(angle)
+    width = abs(np.sin(angle_radian) * old_height) + abs(np.cos(angle_radian) * old_width)
+    height = abs(np.sin(angle_radian) * old_width) + abs(np.cos(angle_radian) * old_height)
+
+    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+    rot_mat[1, 2] += (width - old_width) / 2
+    rot_mat[0, 2] += (height - old_height) / 2
+    return cv2.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
 
 def deskew(img_array, write_on_terminal=True):
     if write_on_terminal:
@@ -44,16 +58,23 @@ def deskew(img_array, write_on_terminal=True):
         img_array_rotate = img_array.copy()
         # Deskew image
         img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
-        with wand_image(blob=img_str) as img:
-            img.deskew(0.4*img.quantum_range)
-            deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        # with wand_image(blob=img_str) as img:
+        #     img.deskew(0.4*img.quantum_range)
+        #     deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
+        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.05)
+        deskew = rotate_straight(img_str, angle, (255, 255, 255))
+
         return img_array_rotate, deskew
     except:
         img_array_rotate = img_array.copy()
         img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
-        with wand_image(blob=img_str) as img:
-            img.deskew(0.4*img.quantum_range)
-            deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        # with wand_image(blob=img_str) as img:
+        #     img.deskew(0.4*img.quantum_range)
+        #     deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
+        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.05)
+        deskew = rotate_straight(img_str, angle, (255, 255, 255))
         return img_array_rotate, deskew
 
 # Increase contrast

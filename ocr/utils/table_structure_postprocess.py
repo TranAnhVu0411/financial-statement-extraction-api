@@ -624,7 +624,7 @@ def table_structure_to_cells(table_structures, table_spans):
                 # otherwise, this could lead to a non-rectangular header region
                 header = header and 'header' in subcell and subcell['header']
         if len(cell_rows) > 0 and len(cell_columns) > 0:
-            cell = {'bbox': list(cell_rect), 'column_nums': list(cell_columns), 'row_nums': list(cell_rows),
+            cell = {'bbox': list(cell_rect), 'column_nums': sorted(list(cell_columns)), 'row_nums': sorted(list(cell_rows)),
                     'header': header, 'subheader': supercell['subheader']}
             cells.append(cell)
 

@@ -46,10 +46,6 @@ class OCRApi(Resource):
                 if request.form['type'] == 'test':
                     table_metadata = ocr_table_metadata(table['image'], tsr_model, net, detector)
                     tables_metadata.append({'table_coordinate': table['table_coordinate'], 'table_metadata': table_metadata})
-                # trả về base64 excel
-                if request.form['type'] == 'file':
-                    table_base64 = ocr_table_file(table['image'], tsr_model, net, detector)
-                    tables_metadata.append({'table_coordinate': table['table_coordinate'], 'excel_file': table_base64})
 
         return make_response({'metadata': {'text_metadata': text_metadata, 'table_metadata': tables_metadata}}, 200)
 
@@ -65,7 +61,8 @@ class End2EndOCRApi(Resource):
         response = file.read()
         images = convert_pdf2images_and_preprocess(response, signature_logo_detection, cleaner, return_type='image')
         page_results = []
-        for img in images:
+        for idx, img in enumerate(images):
+            print('Page {}'.format(idx))
             results = table_text_seperator(img, table_detection)
             text_metadata = ocr_text(results['text'], detector, net)
             text = metadata_to_text(text_metadata)

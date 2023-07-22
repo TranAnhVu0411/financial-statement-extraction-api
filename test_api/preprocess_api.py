@@ -1,28 +1,19 @@
 import requests
 import os
 from pathlib import Path
-import base64
 from tqdm import tqdm
-from PIL import Image
-import io
 import time
+import argparse
+from utils import create_dir, b64_to_image
 
-def b64_to_image(base64_string, path):
-    # base 64 string đang để dưới dạng data:image/jpeg;base64, {encoded_data}
-    # Chỉ cần quan tâm đến encoded_data
-    _, encoded_data = base64_string.split(",", 1)
-    imgdata = base64.b64decode(str(encoded_data))
-    img = Image.open(io.BytesIO(imgdata))
-    img.save(path)
-
-def create_dir(dir):
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+parser = argparse.ArgumentParser(description='Preprocess page images')
+parser.add_argument('file_path', type=str, help='pdf file path', required=True)
+args = parser.parse_args()
 
 if __name__ == "__main__":
     print("RUNNING REQUEST")
     url = "http://127.0.0.1:3502/api/preprocess"
-    pdf_path = "/home/crawl05/test1.pdf"
+    pdf_path = args.file_path
     payload={}
     files=[
         ('file',(os.path.basename(pdf_path),open(pdf_path,'rb'),'application/pdf'))
@@ -34,8 +25,8 @@ if __name__ == "__main__":
     print("REQUEST RUNTIME: {}".format(request_time))
 
     print("CREATING RESULT DIR")
-    original_save_dir = 'example/images/{}/original'.format(Path(pdf_path).stem)
-    preprocess_save_dir = 'example/images/{}/preprocess'.format(Path(pdf_path).stem)
+    original_save_dir = os.path.join('example', 'images', Path(pdf_path).stem, 'original')
+    preprocess_save_dir = os.path.join('example', 'images', Path(pdf_path).stem, 'preprocess')
     create_dir(os.path.join(original_save_dir))
     create_dir(os.path.join(preprocess_save_dir))
 
