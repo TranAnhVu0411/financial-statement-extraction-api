@@ -22,7 +22,6 @@ six
 tensorflow
 vietocr
 pytesseract
-# Wand
 PyMuPDF
 openpyxl
-deskew
+Wand # Trong trường hợp Wand không hoạt động, dùng deskew

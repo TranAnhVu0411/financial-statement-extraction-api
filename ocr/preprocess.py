@@ -7,7 +7,9 @@ import ast
 import math
 
 # Signature processing
-from signver.signver.utils.data_utils import resnet_preprocess
+# from signver.signver.utils.data_utils import resnet_preprocess
+from ocr.gan_files.test import clean
+from ocr.gan_files.util.util import tensor2im
 
 # deskew library
 import pytesseract
@@ -152,20 +154,25 @@ def signature_remove(img_array, detection, cleaner, write_on_terminal=True):
     if write_on_terminal:
         print('SIGNATURE CLEANING')
     mask_metadata = []
+
     if len(signature_metadata)!=0:
         signatures = []
         for metadata in signature_metadata:
             signatures.append(metadata['crop_image'])
 
-        # Feature extraction with resnet model
-        sigs= [ resnet_preprocess( x, resnet=False, invert_input=False ) for x in signatures ]
+        # # signver
+        # # Feature extraction with resnet model
+        # sigs= [ resnet_preprocess( x, resnet=False, invert_input=False ) for x in signatures ]
 
-        # Normalization and clean
-        norm_sigs = [ x * (1./255) for x in sigs]
-        cleaned_sigs = cleaner.clean(np.array(norm_sigs))
+        # # Normalization and clean
+        # norm_sigs = [ x * (1./255) for x in sigs]
+        # cleaned_sigs = cleaner.clean(np.array(norm_sigs))
 
-        # Reverse normalization
-        rev_norm_sigs = [ x / (1./255) for x in cleaned_sigs]
+        # # Reverse normalization
+        # rev_norm_sigs = [ x / (1./255) for x in cleaned_sigs]
+
+        # Cycle GAN
+        rev_norm_sigs = [np.array(tensor2im(clean(x)['fake'])) for x in signatures]
 
         # Resize and binarization
         for i in range(len(rev_norm_sigs)):
@@ -175,7 +182,9 @@ def signature_remove(img_array, detection, cleaner, write_on_terminal=True):
                 interpolation = cv2.INTER_CUBIC
             )
             img_gray = cv2.cvtColor(img_resize, cv2.COLOR_BGR2GRAY)
-            _, mask = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
+            # _, mask = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV) # signver
+            _, mask = cv2.threshold(img_gray, 190, 255, cv2.THRESH_BINARY_INV) # signver
+            
             mask_metadata.append({
                 'coordinates': signature_metadata[i]['coordinates'],
                 'mask': mask
