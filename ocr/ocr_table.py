@@ -267,7 +267,6 @@ def convert_cells_to_luckysheet(cells, row_heights, column_widths, luckysheet_fo
     return luckysheet
 
 def ocr_table_metadata(img, tsr_model, net, detector):
-    print('LOAD MODELS')
     _, img = deskew(img)
     tokens_in_table = get_table_text_object(img, net)
     tsr_result = table_structure_recognition(img, tsr_model)

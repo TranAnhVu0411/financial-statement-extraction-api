@@ -3,7 +3,6 @@ import numpy as np
 from tqdm import tqdm
 
 from ocr.utils.text_utils import ocr, get_text_bounding_box
-from ocr.utils.load_models import VietOCR_model, CRAFT_model
 from ocr.utils.text_region_detection import *
 from ocr.utils.text_line_detection import text_line_detection
 

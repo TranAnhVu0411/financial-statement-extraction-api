@@ -1,20 +1,26 @@
-# from pdf2image import convert_from_bytes, pdfinfo_from_bytes
 import io
 from base64 import b64encode
-
 import cv2
 import numpy as np
-# from wand.image import Image as wand_image
+from tqdm import tqdm
+import ast
+import math
+
+# Signature processing
+from signver.signver.utils.data_utils import resnet_preprocess
+
+# deskew library
+import pytesseract
+# from deskew import determine_skew
+from wand.image import Image as wand_image
+
+# Contrast check and enhancement
+from skimage.exposure import is_low_contrast
 from PIL import Image, ImageEnhance
 
-from signver.signver.utils.data_utils import resnet_preprocess
-from tqdm import tqdm
-import pytesseract
-import ast
-from skimage.exposure import is_low_contrast
+# PDF 2 images library
 import fitz
-import math
-from deskew import determine_skew
+# from pdf2image import convert_from_bytes, pdfinfo_from_bytes
 
 # Use cv2 image format
 # Deskew image
@@ -58,23 +64,32 @@ def deskew(img_array, write_on_terminal=True):
         img_array_rotate = img_array.copy()
         # Deskew image
         img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
-        # with wand_image(blob=img_str) as img:
-        #     img.deskew(0.4*img.quantum_range)
-        #     deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
-        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.1)
-        deskew = rotate_straight(img_str, angle, (255, 255, 255))
+
+        # With wand imagemagick library
+        with wand_image(blob=img_str) as img:
+            img.deskew(0.4*img.quantum_range)
+            deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
+        # # With deskew library
+        # grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
+        # angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.1)
+        # deskew = rotate_straight(img_str, angle, (255, 255, 255))
 
         return img_array_rotate, deskew
     except:
         img_array_rotate = img_array.copy()
         img_str = cv2.imencode('.jpg', img_array)[1].tobytes()
-        # with wand_image(blob=img_str) as img:
-        #     img.deskew(0.4*img.quantum_range)
-        #     deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
-        angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.1)
-        deskew = rotate_straight(img_str, angle, (255, 255, 255))
+
+        # With wand imagemagick library
+        with wand_image(blob=img_str) as img:
+            img.deskew(0.4*img.quantum_range)
+            deskew = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
+        # With deskew library
+        # grayscale = cv2.cvtColor(img_str, cv2.COLOR_BGR2GRAY)
+        # angle = determine_skew(grayscale, min_angle=-5, max_angle=5, min_deviation=0.1)
+        # deskew = rotate_straight(img_str, angle, (255, 255, 255))
+        
         return img_array_rotate, deskew
 
 # Increase contrast
@@ -221,6 +236,7 @@ def convert_image_to_base64(pil_img):
 
 # Convert pdf to list of images and preprocess
 def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner, return_type):
+    # # PDF to images sử dụng thư viện pdf2image
     # print('CONVERT_PDF2IMAGES')
     # images = convert_from_bytes(pdf)
     # base64_images = []
@@ -240,7 +256,8 @@ def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner, re
     #     base64_images.append({'original': convert_image_to_base64(org_image_pil), 'preprocess': convert_image_to_base64(preprocess_image_pil)})
 
     # return base64_images
-    
+
+    # pdf to images sử dụng thư viện pymupdf
     print('CONVERT_PDF2IMAGES AND PREPROCESS')
     base64_images = []
     doc = fitz.open("pdf", pdf)
