@@ -17,7 +17,8 @@ class PreprocessApi(Resource):
         if file.mimetype!='application/pdf':
             return make_response("Upload file format is not correct", 400)
         response = file.read()
-        image_metadata = convert_pdf2images_and_preprocess(response, signature_logo_detection, cleaner, return_type='base64')
+        # image_metadata = convert_pdf2images_and_preprocess(response, signature_logo_detection, cleaner, return_type='base64')
+        image_metadata = convert_pdf2images_and_preprocess(response, signature_logo_detection, return_type='base64')
         return make_response(image_metadata, 200)
         
 class OCRApi(Resource):
@@ -59,7 +60,9 @@ class End2EndOCRApi(Resource):
         if file.mimetype!='application/pdf':
             return make_response("Upload file format is not correct", 400)
         response = file.read()
-        images = convert_pdf2images_and_preprocess(response, signature_logo_detection, cleaner, return_type='image')
+        # images = convert_pdf2images_and_preprocess(response, signature_logo_detection, cleaner, return_type='image')
+        images = convert_pdf2images_and_preprocess(response, signature_logo_detection, return_type='image')
+
         page_results = []
         for idx, img in enumerate(images):
             print('Page {}'.format(idx))

@@ -132,7 +132,8 @@ def remove_stamp(img_array, write_on_terminal=True):
     return remove_stamp
 
 # Signature remove
-def signature_remove(img_array, detection, cleaner, write_on_terminal=True):
+# Tham số cũ (img_array, detection, cleaner, write_on_terminal=True)
+def signature_remove(img_array, detection, write_on_terminal=True):
     if write_on_terminal:
         print('SIGNATURE DETECTION')
     remove_signature = img_array.copy()
@@ -226,12 +227,14 @@ def remove_line(image, write_on_terminal=True):
         cv2.drawContours(result, [c], -1, (255,255,255), 5)
     return result
 
-def preprocess_image(img, signature_logo_detection, cleaner):
+# Tham số cũ (img, signature_logo_detection, cleaner)
+def preprocess_image(img, signature_logo_detection):
     # Rotate lại ảnh original (Nếu original image đang bị xoay 90, 180 hoặc 270)
     org_img, img = deskew(img, write_on_terminal=False)
     img = contrast_adjustment(img, write_on_terminal=False)
     img = remove_stamp(img, write_on_terminal=False)
-    img = signature_remove(img, signature_logo_detection, cleaner, write_on_terminal=False)
+
+    img = signature_remove(img, signature_logo_detection, write_on_terminal=False)
     return org_img, img
 
 def convert_image_to_base64(pil_img):
@@ -244,7 +247,8 @@ def convert_image_to_base64(pil_img):
     return img_b64_string
 
 # Convert pdf to list of images and preprocess
-def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner, return_type):
+# Tham số cũ có thêm cleaner: mô hình signature cleaner của signver (pdf, signature_logo_detection, cleaner, return_type)
+def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, return_type):
     # # PDF to images sử dụng thư viện pdf2image
     # print('CONVERT_PDF2IMAGES')
     # images = convert_from_bytes(pdf)
@@ -284,7 +288,8 @@ def convert_pdf2images_and_preprocess(pdf, signature_logo_detection, cleaner, re
         # Make copy and preprocess image
         image_array = np.array(image)
         image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) # convert RGB to BGR since preprocess is used OpenCV image format
-        org_image_array, preprocess_image_array = preprocess_image(image_array, signature_logo_detection, cleaner)
+        # org_image_array, preprocess_image_array = preprocess_image(image_array, signature_logo_detection, cleaner)
+        org_image_array, preprocess_image_array = preprocess_image(image_array, signature_logo_detection)
         
         if return_type=='base64':
             preprocess_image_array = cv2.cvtColor(preprocess_image_array, cv2.COLOR_BGR2RGB) # reconvert BGR to RGB
