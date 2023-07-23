@@ -8,7 +8,7 @@ import json
 from utils import create_dir, b64_to_excel
 
 parser = argparse.ArgumentParser(description='End to End OCR')
-parser.add_argument('file_path', type=str, help='pdf file path', required=True)
+parser.add_argument('-file_path', '--file_path', type=str, help='pdf file path', required=True)
 args = parser.parse_args()
 
 if __name__ == "__main__":

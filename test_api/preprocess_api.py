@@ -7,7 +7,7 @@ import argparse
 from utils import create_dir, b64_to_image
 
 parser = argparse.ArgumentParser(description='Preprocess page images')
-parser.add_argument('file_path', type=str, help='pdf file path', required=True)
+parser.add_argument('-file_path', '--file_path', type=str, help='pdf file path')
 args = parser.parse_args()
 
 if __name__ == "__main__":
