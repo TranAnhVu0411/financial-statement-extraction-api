@@ -3,6 +3,8 @@ from utils import create_dir
 import os
 import json
 import argparse
+import os
+from dotenv import load_dotenv
 
 parser = argparse.ArgumentParser(description='OCR PDF')
 parser.add_argument('-file_path', '--file_path', type=str, help='preprocess image dir', required=True)
@@ -10,7 +12,8 @@ parser.add_argument('-type', '--type', type=str, help='export type', choices=['a
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    url = "http://localhost:3502/api/ocr"
+    load_dotenv()
+    url = "http://localhost:{}/api/ocr".format(os.getenv('PORT'))
     export_type = args.type
     preprocess_img_dir = args.file_path
     pdf_name = os.path.normpath(preprocess_img_dir).split(os.path.sep)[-2] 

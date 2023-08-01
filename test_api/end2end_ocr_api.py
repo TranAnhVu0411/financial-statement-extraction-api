@@ -6,14 +6,17 @@ import argparse
 import time
 import json
 from utils import create_dir, b64_to_excel
+import os
+from dotenv import load_dotenv
 
 parser = argparse.ArgumentParser(description='End to End OCR')
 parser.add_argument('-file_path', '--file_path', type=str, help='pdf file path', required=True)
 args = parser.parse_args()
 
 if __name__ == "__main__":
+    load_dotenv()
     print("RUNNING REQUEST")
-    url = "http://127.0.0.1:3502/api/e2eocr"
+    url = "http://127.0.0.1:{}/api/e2eocr".format(os.getenv('PORT'))
     pdf_path = args.file_path
     payload={}
     files=[

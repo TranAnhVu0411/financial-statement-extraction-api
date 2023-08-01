@@ -2,6 +2,8 @@ import requests
 import os
 import time
 import argparse
+import os
+from dotenv import load_dotenv
 
 parser = argparse.ArgumentParser(description='OCR pdf')
 parser.add_argument('-file_path', '--file_path', type=str, help='preprocess image', required=True)
@@ -21,8 +23,9 @@ def ocr_single(image_path, url, export_type):
     return response.json()
 
 if __name__ == "__main__":
+    load_dotenv()
     print("RUNNING REQUEST")
-    url = "http://localhost:3502/api/ocr"
+    url = "http://localhost:{}/api/ocr".format(os.getenv('PORT'))
     image_path = args.file_path
     export_type = args.type
     result = ocr_single(image_path, url, export_type)

@@ -4,7 +4,9 @@ from ocr.gan_files.util import util
 import torch
 import ocr.gan_files.gan_models as gan_models
 import ocr.gan_files.data as data
-import ocr.gan_files.checkpoint_path as checkpoint_path
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 class BaseOptions():
     """This class defines options used during both training and test time.
@@ -25,7 +27,7 @@ class BaseOptions():
         parser.add_argument('--name', type=str, default='gan_signdata_kaggle', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--gpu_ids', type=str, default='-1', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU') 
         # parser.add_argument('--checkpoints_dir', type=str, default='gan_files/checkpoints/', help='models are saved here')
-        parser.add_argument('--checkpoints_dir', type=str, default=checkpoint_path.path, help='models are saved here')
+        parser.add_argument('--checkpoints_dir', type=str, default=os.path.join(os.getenv('WORKING_DIR'), os.getenv('GAN_SIGNATURE_CLEANER_PATH')), help='models are saved here')
 
         # model parameters
         parser.add_argument('--model', type=str, default='test', help='chooses which model to use. [cycle_gan | pix2pix | test | colorization]')

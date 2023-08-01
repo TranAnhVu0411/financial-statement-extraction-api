@@ -25,3 +25,4 @@ pytesseract
 PyMuPDF
 openpyxl
 Wand # Trong trường hợp Wand không hoạt động, dùng deskew
+python-dotenv

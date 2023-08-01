@@ -1,3 +1,6 @@
 from app import app
+import os
+from dotenv import load_dotenv
 
-app.run(port=3502, debug=True, host = '0.0.0.0')
+load_dotenv()
+app.run(port=os.getenv('PORT'), debug=True, host = '0.0.0.0')

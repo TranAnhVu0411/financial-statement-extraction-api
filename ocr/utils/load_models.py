@@ -3,8 +3,11 @@ from vietocr.tool.config import Cfg
 import torch
 from CRAFT_pytorch.craft import CRAFT
 from CRAFT_pytorch.test import copyStateDict
-from signver.signver.cleaner.cleaner import Cleaner
-from ocr.path import YOLOV5_PATH, CRAFT_PATH, SIGNATURE_CLEANER_PATH
+# from signver.signver.cleaner.cleaner import Cleaner
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def VietOCR_model():
     # Load vietOCR model
@@ -14,7 +17,7 @@ def VietOCR_model():
     detector = Predictor(config)
     return detector
 
-def YOLOv5_model(model_path, yolo_path = YOLOV5_PATH, threshold = False):
+def YOLOv5_model(model_path, yolo_path = os.path.join(os.getenv('WORKING_DIR'), os.getenv('YOLOV5_PATH')), threshold = False):
     # Load YOLOV5 model
     model = torch.hub.load(
         yolo_path,
@@ -26,15 +29,15 @@ def YOLOv5_model(model_path, yolo_path = YOLOV5_PATH, threshold = False):
         model.conf = 0.7
     return model
 
-def CRAFT_model(model_path = CRAFT_PATH):
+def CRAFT_model(model_path = os.path.join(os.getenv('WORKING_DIR'), os.getenv('CRAFT_PATH'))):
     net = CRAFT()
     net.load_state_dict(copyStateDict(torch.load(model_path, map_location='cpu')))
     net.eval()
     return net
 
-def Signver_clean_model(model_path = SIGNATURE_CLEANER_PATH):
-    # Load signature cleaner model
-    cleaner_model_path = model_path
-    cleaner = Cleaner()
-    cleaner.load(cleaner_model_path)
-    return cleaner
+# def Signver_clean_model(model_path = SIGNATURE_CLEANER_PATH):
+#     # Load signature cleaner model
+#     cleaner_model_path = model_path
+#     cleaner = Cleaner()
+#     cleaner.load(cleaner_model_path)
+#     return cleaner

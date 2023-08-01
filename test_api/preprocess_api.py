@@ -5,14 +5,17 @@ from tqdm import tqdm
 import time
 import argparse
 from utils import create_dir, b64_to_image
+import os
+from dotenv import load_dotenv
 
 parser = argparse.ArgumentParser(description='Preprocess page images')
 parser.add_argument('-file_path', '--file_path', type=str, help='pdf file path')
 args = parser.parse_args()
 
 if __name__ == "__main__":
+    load_dotenv()
     print("RUNNING REQUEST")
-    url = "http://127.0.0.1:3502/api/preprocess"
+    url = "http://127.0.0.1:{}/api/preprocess".format(os.getenv('PORT'))
     pdf_path = args.file_path
     payload={}
     files=[
