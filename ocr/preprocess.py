@@ -138,8 +138,7 @@ def signature_remove(img_array, detection, write_on_terminal=True):
         print('SIGNATURE DETECTION')
     remove_signature = img_array.copy()
     yolo_results = detection([img_array], size=640)  # includes NMS
-    # Pretrained nhận diện chữ ký và logo, nhưng ở đây ta chỉ cần loại bỏ chữ ký
-    results = [i for i in yolo_results.xyxy[0] if i[5]==1]
+    results = yolo_results.xyxy[0]
     signature_metadata = []
     if len(results)!=0:    
         for sign_coord in results:
