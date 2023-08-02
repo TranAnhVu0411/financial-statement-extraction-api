@@ -22,7 +22,7 @@ Cung cấp 2 API (cổng 3502):
     - gan_files: trong gan_files có folder checkpoints, tải folder checkpoints và chuyển folder vào thư mục financial-statement-extraction-api/ocr/gan_files
 - Vào terminal, điều hướng vào thư mục bằng cd financial-statement-extraction-api
 - Tạo Virtual Environment và kích hoạt môi trường: python3 -m venv venv => source venv/bin/activate (Python 3.9.16)
-- Tạo file .env, thay đổi PORT và đường dẫn làm việc như trong .env_copy
+- Tạo file .env, thay đổi PORT và đường dẫn làm việc (WORKING_DIR) như trong .env_copy
 - Chạy pip install -r requirements.txt để tải các thư viện về
 - Chạy lệnh python run.py để chạy server
 - Có thể chạy API bằng postman hoặc vào thư mục test_api (cd test_api) và chạy các ví dụ trong đó để có kết quả hiển thị trong folder example
